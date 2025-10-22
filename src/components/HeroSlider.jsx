@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react';
 
 const slides = [
   {
-    title: 'Ofertas de la semana',
-    subtitle: 'Electrodomésticos, electrónicos y hogar con descuentos especiales',
+    title: 'Siempre conectado, siempre listo',
+    subtitle: 'Power banks, cargadores y accesorios tech al mejor precio',
   },
   {
-    title: 'Entrega rápida',
-    subtitle: 'Recogida en tienda o entrega a domicilio en tu zona',
+    title: 'Entrega express',
+    subtitle: 'Recoge en tienda hoy o recíbelo en tu domicilio',
   },
   {
-    title: 'Compra inteligente',
-    subtitle: 'Productos seleccionados con la mejor relación calidad/precio',
+    title: 'Simplifica tus compras',
+    subtitle: 'Productos útiles, precios justos, entrega confiable',
   },
 ];
 

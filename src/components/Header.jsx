@@ -21,10 +21,10 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur dark:bg-neutral-900/80 border-neutral-200 dark:border-neutral-800">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/" className="font-bold text-lg tracking-tight">
-            <img src="/images/logo.png" alt="Compra Ya!" srcset="" className="w-36 h-12" />
+            <img src="/images/logo.png" alt="Compra Ya!" srcset="" className="w-22 h-20" />
           </Link>
           <nav className="hidden sm:flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-300">
             <Link to="/productos">Productos</Link>
