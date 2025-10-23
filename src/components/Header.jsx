@@ -32,7 +32,7 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to={isAdmin ? '/admin/panel' : '/'} className="font-bold text-lg tracking-tight">
-            <img src="/images/logo.png" alt="Compra Ya!" className="w-22 h-20" />
+            <img src="/images/logo.png" alt="Merca Hogar" className="w-22 h-20" />
           </Link>
           {!isAdmin && (
             <nav className="hidden sm:flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-300">

@@ -4,6 +4,78 @@ import { supabase } from '../config/supabase';
 
 const WHATSAPP_NUMBER = '58582428';
 
+// Municipios de La Habana para entrega a domicilio
+const HAVANA_MUNICIPALITIES = [
+  'Plaza de la Revolución',
+  'Centro Habana',
+  'Habana Vieja',
+  'Cerro',
+  'Diez de Octubre',
+  'La Lisa',
+  'Marianao',
+  'Playa',
+  'Boyeros',
+  'Arroyo Naranjo',
+  'San Miguel del Padrón',
+  'Guanabacoa',
+  'Regla',
+  'Cotorro',
+  'Habana del Este',
+];
+
+// Conversión de HEX a nombre aproximado en español para WhatsApp
+const COLOR_REFERENCES = [
+  { name: 'negro', rgb: [0, 0, 0] },
+  { name: 'blanco', rgb: [255, 255, 255] },
+  { name: 'rojo', rgb: [255, 0, 0] },
+  { name: 'verde', rgb: [0, 128, 0] },
+  { name: 'azul', rgb: [0, 0, 255] },
+  { name: 'amarillo', rgb: [255, 255, 0] },
+  { name: 'cian', rgb: [0, 255, 255] },
+  { name: 'magenta', rgb: [255, 0, 255] },
+  { name: 'naranja', rgb: [255, 165, 0] },
+  { name: 'morado', rgb: [128, 0, 128] },
+  { name: 'rosa', rgb: [255, 192, 203] },
+  { name: 'marrón', rgb: [165, 42, 42] },
+  { name: 'gris', rgb: [128, 128, 128] },
+  { name: 'gris claro', rgb: [211, 211, 211] },
+  { name: 'gris oscuro', rgb: [64, 64, 64] },
+];
+
+function hexToRgb(hex) {
+  if (!hex || typeof hex !== 'string') return null;
+  const h = hex.replace('#', '').trim();
+  if (h.length === 3) {
+    const r = parseInt(h[0] + h[0], 16);
+    const g = parseInt(h[1] + h[1], 16);
+    const b = parseInt(h[2] + h[2], 16);
+    return [r, g, b];
+  }
+  if (h.length === 6) {
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return [r, g, b];
+  }
+  return null;
+}
+
+function hexToColorName(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  let bestName = hex;
+  let bestDist = Infinity;
+  for (const ref of COLOR_REFERENCES) {
+    const [rr, gg, bb] = ref.rgb;
+    const d = Math.sqrt((rgb[0] - rr) ** 2 + (rgb[1] - gg) ** 2 + (rgb[2] - bb) ** 2);
+    if (d < bestDist) {
+      bestDist = d;
+      bestName = ref.name;
+    }
+  }
+  return bestName;
+}
+
 export default function CartPage() {
   const { items, totalAmount, incItem, decItem, removeItem, clear } = useCart();
   const [shippingMethod, setShippingMethod] = useState('recogida');
@@ -46,22 +118,38 @@ export default function CartPage() {
         p_shipping_method: shippingMethod,
         p_delivery_zone: shippingMethod === 'domicilio' ? deliveryZone : null,
         p_shipping_fee: shippingMethod === 'domicilio' ? Number(shippingFee || 0) : 0,
-        p_whatsapp_message: null, // lo rellenamos luego
+        p_whatsapp_message: null,
         p_whatsapp_url: null,
         p_items: itemsPayload,
       });
 
       if (error) throw error;
-      const orderId = data?.order_id || data?.id || 'N/A';
+      let orderId = data?.order_id || data?.id || (Array.isArray(data) ? data[0]?.order_id || data[0]?.id : null);
 
-      // Generar mensaje WhatsApp
+      // Fallback: si no tenemos ID, buscar la última orden por teléfono
+      if (!orderId) {
+        const { data: recentOrders } = await supabase
+          .from('orders')
+          .select('id, customer_phone, created_at')
+          .eq('customer_phone', customerPhone)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        orderId = recentOrders?.[0]?.id || null;
+      }
+
+      if (!orderId) {
+        throw new Error('No se pudo obtener el número de orden. Intenta nuevamente.');
+      }
+
+      // Generar mensaje WhatsApp (con nombre de color aproximado)
       const msgLines = [];
       msgLines.push('*Pedido - Compra Ya!*');
       msgLines.push('');
       msgLines.push(`🧾 *Referencia del pedido:* ${orderId}`);
       msgLines.push('');
       items.forEach(i => {
-        const colorTag = i.selected_color ? ` (${i.selected_color})` : '';
+        const colorName = i.selected_color ? hexToColorName(i.selected_color) : null;
+        const colorTag = colorName ? ` (${colorName})` : '';
         msgLines.push(`• ${i.name}${colorTag} x${i.quantity} = $${(i.quantity * i.price).toFixed(2)}`);
       });
       msgLines.push('');
@@ -79,13 +167,11 @@ export default function CartPage() {
       const text = encodeURIComponent(msgLines.join('\n'));
       const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
 
-      // Actualizar la orden con la info de WhatsApp
       await supabase
         .from('orders')
         .update({ whatsapp_message: decodeURIComponent(text), whatsapp_url: waUrl })
         .eq('id', orderId);
 
-      // Abrir WhatsApp y limpiar carrito
       window.open(waUrl, '_blank');
       clear();
     } catch (e) {
@@ -159,13 +245,16 @@ export default function CartPage() {
 
             {shippingMethod === 'domicilio' && (
               <div className="mt-3 space-y-3">
-                <input
-                  type="text"
-                  placeholder="Municipio"
+                <select
                   value={deliveryZone}
                   onChange={(e) => setDeliveryZone(e.target.value)}
                   className="w-full px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
-                />
+                >
+                  <option value="">Selecciona municipio</option>
+                  {HAVANA_MUNICIPALITIES.map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
                 <input
                   type="text"
                   placeholder="Dirección exacta"

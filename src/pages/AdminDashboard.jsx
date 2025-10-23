@@ -402,6 +402,7 @@ function CategoriesPanel() {
 
 
 // --- Panel de Órdenes (Sin cambios en la lógica) ---
+// --- Panel de Órdenes (ACTUALIZADO) ---
 function OrdersPanel() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -434,24 +435,90 @@ function OrdersPanel() {
     else load();
   }
 
+  async function deleteOrder(orderId) {
+    if (!window.confirm('¿Eliminar esta orden? Esta acción no se puede deshacer.')) return;
+    const { error } = await supabase.rpc('admin_delete_order', {
+      p_token: getAdminToken(),
+      p_order_id: orderId,
+    });
+    if (error) alert(error.message);
+    else {
+      alert('Orden eliminada');
+      load();
+    }
+  }
+
+  // Función auxiliar para obtener clases de color según el estado
+  const getStatusClasses = (status, currentStatus, isButton = false) => {
+    const baseClasses = isButton
+      ? 'px-2 py-1 border rounded-md transition-colors duration-200'
+      : 'border rounded-md p-3';
+
+    if (status === currentStatus) {
+      // Estilos cuando el estado coincide con el estado actual de la orden
+      switch (status) {
+        case 'recibido':
+          return isButton
+            ? `${baseClasses} bg-blue-600 text-white border-blue-600`
+            : `${baseClasses} border-blue-600 bg-blue-50 dark:bg-blue-900/20`;
+        case 'procesado':
+          return isButton
+            ? `${baseClasses} bg-yellow-600 text-white border-yellow-600`
+            : `${baseClasses} border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20`;
+        case 'entregado':
+          return isButton
+            ? `${baseClasses} bg-green-600 text-white border-green-600`
+            : `${baseClasses} border-green-600 bg-green-50 dark:bg-green-900/20`;
+        case 'cancelado':
+          return isButton
+            ? `${baseClasses} bg-red-600 text-white border-red-600`
+            : `${baseClasses} border-red-600 bg-red-50 dark:bg-red-900/20`;
+        default:
+          return baseClasses;
+      }
+    } else {
+      // Estilos para botones no activos (solo para botones)
+      if (isButton) {
+        return `${baseClasses} bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-700`;
+      }
+      return baseClasses;
+    }
+  };
+
   return (
     <div>
       {loading ? 'Cargando...' : (
         <div className="space-y-3">
-          {orders.map(o => (
-            <div key={o.id} className="border rounded-md p-3 flex items-center justify-between">
-              <div>
-                <div className="font-semibold text-sm">Pedido {o.id.slice(0, 8)} • {new Date(o.created_at).toLocaleString()}</div>
-                <div className="text-xs">Cliente: {o.customer_name || '—'} | Tel: {o.customer_phone || '—'}</div>
-                <div className="text-xs">Total: ${Number(o.total_amount).toFixed(2)} • Estado: {o.status}</div>
+          {orders.map(o => {
+            return (
+              <div key={o.id} className={getStatusClasses(o.status, o.status, false)}>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="font-semibold text-sm">Pedido {o.id.slice(0, 8)} • {new Date(o.created_at).toLocaleString()}</div>
+                    <div className="text-xs">Cliente: {o.customer_name || '—'} | Tel: {o.customer_phone || '—'}</div>
+                    <div className="text-xs">Total: ${Number(o.total_amount).toFixed(2)} • Estado: <span className="font-medium">{o.status}</span></div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {['recibido', 'procesado', 'entregado', 'cancelado'].map(status => (
+                      <button
+                        key={status}
+                        className={getStatusClasses(status, o.status, true)}
+                        onClick={() => updateStatus(o.id, status)}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                    <button
+                      className="px-2 py-1 border border-red-300 dark:border-red-700 rounded-md text-red-600 dark:text-red-400 bg-white dark:bg-neutral-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
+                      onClick={() => deleteOrder(o.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {['recibido', 'procesado', 'entregado', 'cancelado'].map(s => (
-                  <button key={s} className="px-2 py-1 border rounded-md" onClick={() => updateStatus(o.id, s)}>{s}</button>
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {orders.length === 0 && <div className="text-sm text-neutral-600 dark:text-neutral-300">No hay órdenes</div>}
         </div>
       )}

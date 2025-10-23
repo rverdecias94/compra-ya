@@ -280,6 +280,19 @@ $$;
 
 grant execute on function public.admin_update_order_status(uuid, uuid, order_status) to anon;
 
+-- Admin: delete order
+create or replace function public.admin_delete_order(p_token uuid, p_order_id uuid)
+returns void language plpgsql security definer as $$
+begin
+  if not public.admin_is_valid(p_token) then
+    raise exception 'Token inválido';
+  end if;
+  delete from public.orders where id = p_order_id;
+end;
+$$;
+
+grant execute on function public.admin_delete_order(uuid, uuid) to anon;
+
 -- Admin: list orders (basic)
 create or replace function public.admin_list_orders(p_token uuid, p_limit int default 100)
 returns table (
