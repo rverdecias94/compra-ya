@@ -110,42 +110,9 @@ export default function CartPage() {
         selected_color: i.selected_color || null,
       }));
 
-      // Crear orden en Supabase
-      const { data, error } = await supabase.rpc('create_order', {
-        p_customer_name: customerName,
-        p_customer_phone: customerPhone,
-        p_customer_address: shippingMethod === 'domicilio' ? customerAddress : null,
-        p_shipping_method: shippingMethod,
-        p_delivery_zone: shippingMethod === 'domicilio' ? deliveryZone : null,
-        p_shipping_fee: shippingMethod === 'domicilio' ? Number(shippingFee || 0) : 0,
-        p_whatsapp_message: null,
-        p_whatsapp_url: null,
-        p_items: itemsPayload,
-      });
-
-      if (error) throw error;
-      let orderId = data?.order_id || data?.id || (Array.isArray(data) ? data[0]?.order_id || data[0]?.id : null);
-
-      // Fallback: si no tenemos ID, buscar la última orden por teléfono
-      if (!orderId) {
-        const { data: recentOrders } = await supabase
-          .from('orders')
-          .select('id, customer_phone, created_at')
-          .eq('customer_phone', customerPhone)
-          .order('created_at', { ascending: false })
-          .limit(1);
-        orderId = recentOrders?.[0]?.id || null;
-      }
-
-      if (!orderId) {
-        throw new Error('No se pudo obtener el número de orden. Intenta nuevamente.');
-      }
-
-      // Generar mensaje WhatsApp (con nombre de color aproximado)
+      // Generar mensaje WhatsApp (sin ID de orden)
       const msgLines = [];
       msgLines.push('*Pedido - Compra Ya!*');
-      msgLines.push('');
-      msgLines.push(`🧾 *Referencia del pedido:* ${orderId}`);
       msgLines.push('');
       items.forEach(i => {
         const colorName = i.selected_color ? hexToColorName(i.selected_color) : null;
@@ -167,11 +134,22 @@ export default function CartPage() {
       const text = encodeURIComponent(msgLines.join('\n'));
       const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
 
-      await supabase
-        .from('orders')
-        .update({ whatsapp_message: decodeURIComponent(text), whatsapp_url: waUrl })
-        .eq('id', orderId);
+      // Crear orden en Supabase después de generar el mensaje
+      const { data, error } = await supabase.rpc('create_order', {
+        p_customer_name: customerName,
+        p_customer_phone: customerPhone,
+        p_customer_address: shippingMethod === 'domicilio' ? customerAddress : null,
+        p_shipping_method: shippingMethod,
+        p_delivery_zone: shippingMethod === 'domicilio' ? deliveryZone : null,
+        p_shipping_fee: shippingMethod === 'domicilio' ? Number(shippingFee || 0) : 0,
+        p_whatsapp_message: decodeURIComponent(text),
+        p_whatsapp_url: waUrl,
+        p_items: itemsPayload,
+      });
 
+      if (error) throw error;
+
+      // Abrir WhatsApp y limpiar carrito
       window.open(waUrl, '_blank');
       clear();
     } catch (e) {

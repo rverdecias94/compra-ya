@@ -10,6 +10,7 @@ import CartPage from './pages/CartPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import { CartProvider } from './context/CartContext';
+import ProductDetail from './pages/ProductDetail';
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/productos" element={<ProductsPage />} />
+        <Route path="/producto/:id" element={<ProductDetail />} />
         <Route path="/carrito" element={<CartPage />} />
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/panel" element={<ProtectedAdmin><AdminDashboard /></ProtectedAdmin>} />

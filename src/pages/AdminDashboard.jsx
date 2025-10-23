@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../config/supabase';
 import ImageUpload from '../components/ImageUpload';
+import { AdminMessageProvider, useAdminMessage } from '../context/AdminMessageContext';
+import AdminMessage from '../components/AdminMessage';
 
 // Helper para obtener el token de admin desde localStorage
 const getAdminToken = () => (typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null);
@@ -49,6 +51,7 @@ function ProductForm({ onSaved, productToEdit }) {
   const [isActive, setIsActive] = useState(true);
   const [colors, setColors] = useState([]); // array de hex ej: ["#34f213"]
   const [categories, setCategories] = useState([]);
+  const { setMessage } = useAdminMessage();
 
   useEffect(() => {
     supabase.from('categories').select('*').order('name').then(({ data }) => setCategories(data || []));
@@ -98,9 +101,9 @@ function ProductForm({ onSaved, productToEdit }) {
     });
 
     if (error) {
-      alert(error.message);
+      setMessage(`Error: ${error.message}`);
     } else {
-      alert('Producto guardado');
+      setMessage('Producto guardado exitosamente');
       onSaved?.(data);
     }
   }
@@ -175,11 +178,12 @@ function ProductsPanel() {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const { setMessage } = useAdminMessage();
 
   async function loadProducts() {
     setLoading(true);
     const { data, error } = await supabase.from('products').select('*, categories(name)').order('name');
-    if (error) alert(error.message);
+    if (error) setMessage(`Error: ${error.message}`);
     else setProducts(data || []);
     setLoading(false);
   }
@@ -204,9 +208,9 @@ function ProductsPanel() {
       p_id: productId
     });
 
-    if (error) alert(error.message);
+    if (error) setMessage(`Error: ${error.message}`);
     else {
-      alert('Producto eliminado');
+      setMessage('Producto eliminado exitosamente');
       loadProducts();
     }
   }
@@ -273,6 +277,7 @@ function ProductsPanel() {
 // --- Formulario de Categoría (Sin cambios) ---
 function CategoryForm({ onSaved, categoryToEdit }) {
   const [name, setName] = useState('');
+  const { setMessage } = useAdminMessage();
 
   useEffect(() => {
     if (categoryToEdit) {
@@ -289,9 +294,9 @@ function CategoryForm({ onSaved, categoryToEdit }) {
       p_name: name,
     });
     if (error) {
-      alert(error.message);
+      setMessage(`Error: ${error.message}`);
     } else {
-      alert('Categoría guardada');
+      setMessage('Categoría guardada exitosamente');
       onSaved?.(data);
     }
   }
@@ -315,11 +320,12 @@ function CategoriesPanel() {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const { setMessage } = useAdminMessage();
 
   async function loadCategories() {
     setLoading(true);
     const { data, error } = await supabase.from('categories').select('*').order('name');
-    if (error) alert(error.message);
+    if (error) setMessage(`Error: ${error.message}`);
     else setCategories(data || []);
     setLoading(false);
   }
@@ -344,9 +350,9 @@ function CategoriesPanel() {
       p_id: categoryId
     });
 
-    if (error) alert(error.message);
+    if (error) setMessage(`Error: ${error.message}`);
     else {
-      alert('Categoría eliminada');
+      setMessage('Categoría eliminada exitosamente');
       loadCategories();
     }
   }
@@ -406,6 +412,7 @@ function CategoriesPanel() {
 function OrdersPanel() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { setMessage } = useAdminMessage();
 
   async function load() {
     setLoading(true);
@@ -417,7 +424,7 @@ function OrdersPanel() {
       if (error) throw error;
       setOrders(data || []);
     } catch (e) {
-      alert(e.message || String(e));
+      setMessage(`Error: ${e.message || String(e)}`);
     } finally {
       setLoading(false);
     }
@@ -431,8 +438,11 @@ function OrdersPanel() {
       p_order_id: orderId,
       p_status: status
     });
-    if (error) alert(error.message);
-    else load();
+    if (error) setMessage(`Error: ${error.message}`);
+    else {
+      setMessage(`Estado actualizado a: ${status}`);
+      load();
+    }
   }
 
   async function deleteOrder(orderId) {
@@ -441,9 +451,9 @@ function OrdersPanel() {
       p_token: getAdminToken(),
       p_order_id: orderId,
     });
-    if (error) alert(error.message);
+    if (error) setMessage(`Error: ${error.message}`);
     else {
-      alert('Orden eliminada');
+      setMessage('Orden eliminada exitosamente');
       load();
     }
   }
@@ -492,24 +502,24 @@ function OrdersPanel() {
           {orders.map(o => {
             return (
               <div key={o.id} className={getStatusClasses(o.status, o.status, false)}>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex-1">
                     <div className="font-semibold text-sm">Pedido {o.id.slice(0, 8)} • {new Date(o.created_at).toLocaleString()}</div>
                     <div className="text-xs">Cliente: {o.customer_name || '—'} | Tel: {o.customer_phone || '—'}</div>
                     <div className="text-xs">Total: ${Number(o.total_amount).toFixed(2)} • Estado: <span className="font-medium">{o.status}</span></div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
                     {['recibido', 'procesado', 'entregado', 'cancelado'].map(status => (
                       <button
                         key={status}
-                        className={getStatusClasses(status, o.status, true)}
+                        className={`${getStatusClasses(status, o.status, true)} text-xs whitespace-nowrap flex-shrink-0`}
                         onClick={() => updateStatus(o.id, status)}
                       >
                         {status}
                       </button>
                     ))}
                     <button
-                      className="px-2 py-1 border border-red-300 dark:border-red-700 rounded-md text-red-600 dark:text-red-400 bg-white dark:bg-neutral-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
+                      className="px-2 py-1 border border-red-300 dark:border-red-700 rounded-md text-red-600 dark:text-red-400 bg-white dark:bg-neutral-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200 text-xs whitespace-nowrap flex-shrink-0"
                       onClick={() => deleteOrder(o.id)}
                     >
                       Eliminar
@@ -527,7 +537,7 @@ function OrdersPanel() {
 }
 
 // --- Dashboard Principal (Sin cambios) ---
-export default function AdminDashboard() {
+function AdminDashboardContent() {
   const [tab, setTab] = useState('productos');
   return (
     <section className="max-w-6xl mx-auto px-4 py-8">
@@ -549,5 +559,14 @@ export default function AdminDashboard() {
         {tab === 'ordenes' && <OrdersPanel />}
       </div>
     </section>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <AdminMessageProvider>
+      <AdminMessage />
+      <AdminDashboardContent />
+    </AdminMessageProvider>
   );
 }

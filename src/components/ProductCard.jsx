@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
 export default function ProductCard({ product }) {
@@ -13,16 +14,16 @@ export default function ProductCard({ product }) {
 
   return (
     <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-3 flex flex-col">
-      <div className="aspect-square rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 mb-3">
+      <Link to={`/producto/${product.id}`} className="aspect-square rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 mb-3 block">
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-neutral-500">Sin imagen</div>
         )}
-      </div>
+      </Link>
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-sm">{product.name}</h3>
+          <Link to={`/producto/${product.id}`} className="font-semibold text-sm hover:underline">{product.name}</Link>
           {!product.is_active || product.agotado ? (
             <span className="px-2 py-0.5 text-xs rounded-md bg-neutral-200 dark:bg-neutral-700">Agotado</span>
           ) : null}
@@ -83,6 +84,9 @@ export default function ProductCard({ product }) {
             Añadir al carrito
           </button>
         )}
+      </div>
+      <div className="mt-2">
+        <Link to={`/producto/${product.id}`} className="text-xs text-green-700 hover:underline">Ver detalles</Link>
       </div>
     </div>
   );
