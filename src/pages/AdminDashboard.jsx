@@ -47,7 +47,7 @@ function ProductForm({ onSaved, productToEdit }) {
   const [stock, setStock] = useState(0);
   const [agotado, setAgotado] = useState(false);
   const [isActive, setIsActive] = useState(true);
-  const [colors, setColors] = useState('');
+  const [colors, setColors] = useState([]); // array de hex ej: ["#34f213"]
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -64,17 +64,25 @@ function ProductForm({ onSaved, productToEdit }) {
       setStock(productToEdit.stock || 0);
       setAgotado(productToEdit.agotado || false);
       setIsActive(productToEdit.is_active ?? true);
-      setColors(productToEdit.colors?.join(', ') || '');
+      setColors(Array.isArray(productToEdit.colors) ? productToEdit.colors : []);
     } else {
       setName(''); setDescription(''); setPrice(''); setCategoryId('');
       setImageUrl(''); setStock(0); setAgotado(false); setIsActive(true);
-      setColors('');
+      setColors([]);
     }
   }, [productToEdit]);
 
-  async function handleSave() {
-    const colorsArray = colors.split(',').map(c => c.trim()).filter(c => c);
+  function addColor() {
+    setColors(prev => [...prev, '#000000']);
+  }
+  function updateColor(idx, value) {
+    setColors(prev => prev.map((c, i) => i === idx ? value : c));
+  }
+  function removeColor(idx) {
+    setColors(prev => prev.filter((_, i) => i !== idx));
+  }
 
+  async function handleSave() {
     const { data, error } = await supabase.rpc('admin_upsert_product', {
       p_token: getAdminToken(),
       p_id: productToEdit?.id || null,
@@ -86,7 +94,7 @@ function ProductForm({ onSaved, productToEdit }) {
       p_stock: Number(stock),
       p_agotado: agotado,
       p_is_active: isActive,
-      p_colors: colorsArray,
+      p_colors: colors,
     });
 
     if (error) {
@@ -127,8 +135,17 @@ function ProductForm({ onSaved, productToEdit }) {
           <input type="number" className="mt-1 w-full px-3 py-2 border rounded-md" placeholder="Stock" value={stock} onChange={e => setStock(Number(e.target.value))} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Colores (separados por coma)</label>
-          <input className="mt-1 w-full px-3 py-2 border rounded-md" placeholder="Rojo, Verde, Azul" value={colors} onChange={e => setColors(e.target.value)} />
+          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Colores</label>
+          <div className="mt-1 space-y-2">
+            {colors.map((c, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <input type="color" value={c} onChange={(e) => updateColor(idx, e.target.value)} />
+                <span className="w-6 h-6 rounded-full border" style={{ backgroundColor: c }}></span>
+                <button className="text-sm text-red-600" onClick={() => removeColor(idx)}>Quitar</button>
+              </div>
+            ))}
+            <button type="button" className="px-2 py-1 rounded-md border" onClick={addColor}>+ Agregar color</button>
+          </div>
         </div>
       </div>
       {/* --- Fin del Grid --- */}

@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCart } from '../context/CartContext';
 
 export default function ProductCard({ product }) {
   const { addItem, incItem, decItem, items } = useCart();
   const inCart = items.find(i => i.product_id === product.id);
   const atStockLimit = inCart ? inCart.quantity >= product.stock : false;
+  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || null);
+
+  useEffect(() => {
+    setSelectedColor(product.colors?.[0] || null);
+  }, [product.id]);
 
   return (
     <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-3 flex flex-col">
@@ -22,15 +27,21 @@ export default function ProductCard({ product }) {
             <span className="px-2 py-0.5 text-xs rounded-md bg-neutral-200 dark:bg-neutral-700">Agotado</span>
           ) : null}
         </div>
+        <div>
+          {product.stock > 0 ? `Cant: ${product.stock}` : 'Agotado'}
+        </div>
+
         {product.colors?.length > 0 && (
-          <div className="flex gap-1 mt-2 flex-wrap">
+          <div className="flex gap-2 mt-2 flex-wrap">
             {product.colors.map((color, idx) => (
-              <span
+              <button
+                type="button"
                 key={idx}
-                className="text-xs px-2 py-1 rounded-md border border-neutral-300 dark:border-neutral-700"
-              >
-                {color}
-              </span>
+                aria-label={`color ${color}`}
+                onClick={() => setSelectedColor(color)}
+                className={`w-6 h-6 rounded-full border ${selectedColor === color ? 'ring-2 ring-green-600 border-green-600' : 'border-neutral-300 dark:border-neutral-700'}`}
+                style={{ backgroundColor: color }}
+              />
             ))}
           </div>
         )}
@@ -38,7 +49,7 @@ export default function ProductCard({ product }) {
         <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 line-clamp-2">{product.description}</p>
       </div>
       <div className="mt-2 flex items-center justify-between">
-        <div className="font-semibold">${Number(product.price).toFixed(2)}</div>
+        <div className="font-semibold">${Number(product.price).toFixed(2)} USD</div>
         {inCart ? (
           <div className="flex items-center gap-2">
             <button
@@ -65,7 +76,8 @@ export default function ProductCard({ product }) {
               name: product.name,
               price: product.price,
               image_url: product.image_url,
-              stock: product.stock
+              stock: product.stock,
+              selected_color: selectedColor || null,
             })}
           >
             Añadir al carrito
