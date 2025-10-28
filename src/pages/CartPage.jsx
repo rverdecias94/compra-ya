@@ -133,7 +133,7 @@ export default function CartPage() {
       msgLines.push('');
       msgLines.push(`Subtotal: $${Number(totalAmount).toFixed(2)}`);
       if (shippingMethod === 'domicilio') {
-        msgLines.push(`Mensajería: $${Number(shippingFee || 0).toFixed(2)}`);
+        msgLines.push(`Mensajería: (Por definir dependiendo del lugar)`);
         msgLines.push(`Zona: ${deliveryZone}`);
         msgLines.push(`Dirección: ${customerAddress}`);
       }
