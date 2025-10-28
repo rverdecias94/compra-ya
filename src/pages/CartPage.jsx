@@ -299,7 +299,7 @@ export default function CartPage() {
               onClick={handleCheckout}
               disabled={loading || items.length === 0 || !isFormValid}
             >
-              {loading ? 'Enviando...' : 'Enviar por WhatsApp'}
+              {loading ? 'Enviando...' : 'Enviar pedido por WhatsApp'}
             </button>
           </div>
         </div>
