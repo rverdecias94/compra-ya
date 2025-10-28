@@ -70,7 +70,7 @@ export default function ProductDetail() {
     addItem({
       product_id: product.id,
       name: product.name,
-      price: product.price,
+      price: product.sale_price != null ? product.sale_price : product.price,
       image_url: product.image_url,
       stock: product.stock,
       selected_color: selectedColor || null,
@@ -97,11 +97,35 @@ export default function ProductDetail() {
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{product.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight">{product.name}</h1>
+              {product.label ? (
+                <span className={`px-2 py-1 text-xs rounded-md ${product.label === 'Nueva oferta' ? 'bg-blue-600 text-white' : 'bg-amber-500 text-white'}`}>{product.label}</span>
+              ) : null}
+            </div>
             <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">{product.description}</p>
 
+            {product.specs?.length > 0 && (
+              <div className="mt-4">
+                <div className="text-sm mb-2">Especificaciones</div>
+                <ul className="list-disc list-inside">
+                  {product.specs.map((spec, idx) => (
+                    <li key={idx}>{spec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="mt-3 text-sm">{product.stock > 0 ? `Stock disponible: ${product.stock}` : 'Agotado'}</div>
-            <div className="mt-2 font-semibold text-lg">${Number(product.price).toFixed(2)} USD</div>
+            <div className="mt-2 flex items-baseline gap-2">
+              {product.sale_price != null ? (
+                <>
+                  <span className="text-sm line-through text-red-600">${Number(product.price).toFixed(2)} USD</span>
+                  <span className="text-2xl font-bold">${Number(product.sale_price).toFixed(2)} USD</span>
+                </>
+              ) : (
+                <span className="text-2xl font-bold">${Number(product.price).toFixed(2)} USD</span>
+              )}
+            </div>
 
             {product.colors?.length > 0 && (
               <div className="mt-4">
@@ -162,9 +186,20 @@ export default function ProductDetail() {
         {related.length === 0 ? (
           <div className="text-neutral-600 dark:text-neutral-300">Sin productos relacionados</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
             {related.map(p => (
-              <ProductCard key={p.id} product={p} />
+              <Link
+                key={p.id}
+                to={`/producto/${p.id}`}
+                className="block rounded-md overflow-hidden border hover:shadow-sm transition"
+                aria-label={p.name}
+              >
+                {p.image_url ? (
+                  <img src={p.image_url} alt={p.name} className="w-full h-24 sm:h-28 object-cover" />
+                ) : (
+                  <div className="w-full h-24 sm:h-28 bg-neutral-200 dark:bg-neutral-800" />
+                )}
+              </Link>
             ))}
           </div>
         )}

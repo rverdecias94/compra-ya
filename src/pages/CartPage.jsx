@@ -76,11 +76,20 @@ function hexToColorName(hex) {
   return bestName;
 }
 
+// Validación y normalización de teléfono cubano (+53 y 8 dígitos)
+function isValidCubanPhone(input) { return /^\+53\s?\d{8}$/.test(input.trim()); }
+function normalizeCubanPhone(input) {
+  const digits = input.replace(/\D/g, '');
+  if (digits.length === 8) return `+53 ${digits}`;
+  if (digits.startsWith('53') && digits.length === 10) return `+53 ${digits.slice(2)}`;
+  return input;
+}
+
 export default function CartPage() {
   const { items, totalAmount, incItem, decItem, removeItem, clear } = useCart();
   const [shippingMethod, setShippingMethod] = useState('recogida');
   const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('+53');
   const [customerAddress, setCustomerAddress] = useState('');
   const [deliveryZone, setDeliveryZone] = useState('');
   const [shippingFee, setShippingFee] = useState(0);
@@ -91,11 +100,13 @@ export default function CartPage() {
     [totalAmount, shippingFee]
   );
 
+  const nameValid = useMemo(() => /^[A-Za-zÁÉÍÓÚÑáéíóúÜü\s]{2,}$/.test(customerName.trim()), [customerName]);
+  const phoneValid = useMemo(() => isValidCubanPhone(customerPhone), [customerPhone]);
   const isFormValid = useMemo(() => {
-    if (!customerName.trim() || !customerPhone.trim()) return false;
+    if (!nameValid || !phoneValid) return false;
     if (shippingMethod === 'domicilio' && (!deliveryZone.trim() || !customerAddress.trim())) return false;
     return true;
-  }, [customerName, customerPhone, deliveryZone, customerAddress, shippingMethod]);
+  }, [nameValid, phoneValid, deliveryZone, customerAddress, shippingMethod]);
 
   async function handleCheckout() {
     if (items.length === 0 || !isFormValid) return;
@@ -130,7 +141,6 @@ export default function CartPage() {
       msgLines.push('');
       msgLines.push(`Nombre: ${customerName}`);
       msgLines.push(`Teléfono: ${customerPhone}`);
-
       const text = encodeURIComponent(msgLines.join('\n'));
       const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
 
@@ -246,20 +256,42 @@ export default function CartPage() {
             <div className="mt-3 text-sm">Total: ${cartTotal.toFixed(2)}</div>
 
             <div className="mt-4 space-y-3">
-              <input
-                type="text"
-                placeholder="Tu nombre"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
-              />
-              <input
-                type="tel"
-                placeholder="Tu teléfono"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
-              />
+              <div>
+                <input
+                  type="text"
+                  placeholder="Tu nombre"
+                  value={customerName}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    const cleaned = v.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúÜü\s]/g, '');
+                    setCustomerName(cleaned);
+                  }}
+                  className="w-full px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
+                />
+                {customerName && !nameValid && (
+                  <div className="mt-1 text-xs text-red-600">Ingresa solo letras y espacios.</div>
+                )}
+              </div>
+              <div>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="Tu teléfono (+53 XXXXXXXX)"
+                  value={customerPhone}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/[^\d\+\s]/g, '');
+                    setCustomerPhone(v);
+                  }}
+                  onBlur={() => {
+                    const norm = normalizeCubanPhone(customerPhone);
+                    setCustomerPhone(norm);
+                  }}
+                  className="w-full px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
+                />
+                {customerPhone && !phoneValid && (
+                  <div className="mt-1 text-xs text-red-600">Formato requerido: +53 XXXXXXXX (8 dígitos).</div>
+                )}
+              </div>
             </div>
 
             <button

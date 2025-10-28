@@ -12,9 +12,16 @@ export default function ProductCard({ product }) {
     setSelectedColor(product.colors?.[0] || null);
   }, [product.id]);
 
+  const labelClass = product.label === 'Nueva oferta'
+    ? 'absolute top-2 left-2 px-2 py-1 text-xs rounded-md bg-blue-600 text-white shadow'
+    : 'absolute top-2 left-2 px-2 py-1 text-xs rounded-md bg-amber-500 text-white shadow';
+
   return (
     <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-3 flex flex-col">
-      <Link to={`/producto/${product.id}`} className="aspect-square rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 mb-3 block">
+      <Link to={`/producto/${product.id}`} className="relative aspect-square rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 mb-3 block">
+        {product.label ? (
+          <span className={labelClass}>{product.label}</span>
+        ) : null}
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
         ) : (
@@ -50,7 +57,16 @@ export default function ProductCard({ product }) {
         <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 line-clamp-2">{product.description}</p>
       </div>
       <div className="mt-2 flex items-center justify-between">
-        <div className="font-semibold">${Number(product.price).toFixed(2)} USD</div>
+        <div className="flex items-baseline gap-2">
+          {product.sale_price != null ? (
+            <>
+              <span className="text-sm line-through text-red-600">${Number(product.price).toFixed(2)} USD</span>
+              <span className="text-lg font-bold">${Number(product.sale_price).toFixed(2)} USD</span>
+            </>
+          ) : (
+            <span className="text-lg font-bold">${Number(product.price).toFixed(2)} USD</span>
+          )}
+        </div>
         {inCart ? (
           <div className="flex items-center gap-2">
             <button
@@ -75,7 +91,7 @@ export default function ProductCard({ product }) {
             onClick={() => addItem({
               product_id: product.id,
               name: product.name,
-              price: product.price,
+              price: product.sale_price != null ? product.sale_price : product.price,
               image_url: product.image_url,
               stock: product.stock,
               selected_color: selectedColor || null,

@@ -6,7 +6,9 @@ import ProductCard from '../components/ProductCard';
 export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [priceOrder, setPriceOrder] = useState(''); // '', 'asc', 'desc'
+  const [priceOrder, setPriceOrder] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -17,33 +19,29 @@ export default function ProductsPage() {
     }
   });
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ['products'],
+  const { data: result, isLoading } = useQuery({
+    queryKey: ['products', page, categoryId, search, priceOrder],
     queryFn: async () => {
-      const { data, error } = await supabase.from('products').select('*').eq('is_active', true);
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      let query = supabase.from('products').select('*', { count: 'exact' }).eq('is_active', true);
+      if (categoryId) query = query.eq('category_id', categoryId);
+      if (search.trim().length >= 2) {
+        const s = search.trim();
+        query = query.or(`name.ilike.%${s}%,description.ilike.%${s}%`);
+      }
+      if (priceOrder === 'asc') query = query.order('price', { ascending: true });
+      else if (priceOrder === 'desc') query = query.order('price', { ascending: false });
+      else query = query.order('name', { ascending: true });
+      const { data, error, count } = await query.range(from, to);
       if (error) throw error;
-      return data;
+      return { data, count };
     }
   });
 
-  const filtered = useMemo(() => {
-    let list = products || [];
-    if (search.trim().length >= 2) {
-      const s = search.trim().toLowerCase();
-      list = list.filter(p => (
-        p.name?.toLowerCase().includes(s) || p.description?.toLowerCase().includes(s)
-      ));
-    }
-    if (categoryId) {
-      list = list.filter(p => p.category_id === categoryId);
-    }
-    if (priceOrder === 'asc') {
-      list = [...list].sort((a, b) => Number(a.price) - Number(b.price));
-    } else if (priceOrder === 'desc') {
-      list = [...list].sort((a, b) => Number(b.price) - Number(a.price));
-    }
-    return list;
-  }, [products, search, categoryId, priceOrder]);
+  const products = result?.data || [];
+  const total = result?.count || 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <section id="productos" className="max-w-6xl mx-auto px-4 py-8">
@@ -57,12 +55,12 @@ export default function ProductsPage() {
             type="text"
             placeholder="Buscar producto..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setPage(1); setSearch(e.target.value); }}
             className="px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
           />
           <select
             value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
+            onChange={(e) => { setPage(1); setCategoryId(e.target.value); }}
             className="px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
           >
             <option value="">Todas</option>
@@ -72,7 +70,7 @@ export default function ProductsPage() {
           </select>
           <select
             value={priceOrder}
-            onChange={(e) => setPriceOrder(e.target.value)}
+            onChange={(e) => { setPage(1); setPriceOrder(e.target.value); }}
             className="px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
           >
             <option value="">Precio</option>
@@ -85,14 +83,33 @@ export default function ProductsPage() {
       {isLoading ? (
         <div className="mt-6">Cargando productos...</div>
       ) : (
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filtered.map(p => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-          {filtered.length === 0 && (
-            <div className="col-span-full text-center text-neutral-600 dark:text-neutral-300">No hay resultados</div>
-          )}
-        </div>
+        <>
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {products.map(p => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+            {products.length === 0 && (
+              <div className="col-span-full text-center text-neutral-600 dark:text-neutral-300">No hay resultados</div>
+            )}
+          </div>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <button
+              className="px-3 py-1 rounded-md border disabled:opacity-50"
+              disabled={page <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+            >
+              ← Anterior
+            </button>
+            <div className="text-sm">Página {page} de {totalPages}</div>
+            <button
+              className="px-3 py-1 rounded-md border disabled:opacity-50"
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            >
+              Siguiente →
+            </button>
+          </div>
+        </>
       )}
     </section>
   );

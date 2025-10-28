@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../config/supabase';
 import ImageUpload from '../components/ImageUpload';
 import { AdminMessageProvider, useAdminMessage } from '../context/AdminMessageContext';
@@ -39,133 +40,278 @@ function Modal({ isOpen, onClose, title, children }) {
   );
 }
 
-// --- Formulario de Producto (ACTUALIZADO CON GRID) ---
+// --- Formulario de Producto (COMPLETO CON TODAS LAS FUNCIONALIDADES) ---
 function ProductForm({ onSaved, productToEdit }) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [stock, setStock] = useState(0);
-  const [agotado, setAgotado] = useState(false);
-  const [isActive, setIsActive] = useState(true);
-  const [colors, setColors] = useState([]); // array de hex ej: ["#34f213"]
-  const [categories, setCategories] = useState([]);
+  const [name, setName] = useState(productToEdit?.name || '');
+  const [description, setDescription] = useState(productToEdit?.description || '');
+  const [specs, setSpecs] = useState(productToEdit?.specs || []);
+  const [price, setPrice] = useState(productToEdit?.price || '');
+  const [salePrice, setSalePrice] = useState(productToEdit?.sale_price || '');
+  const [stock, setStock] = useState(productToEdit?.stock || 0);
+  const [categoryId, setCategoryId] = useState(productToEdit?.category_id || '');
+  const [colors, setColors] = useState(productToEdit?.colors || []);
+  const [label, setLabel] = useState(productToEdit?.label || '');
+  const [isActive, setIsActive] = useState(!!productToEdit?.is_active);
+  const [agotado, setAgotado] = useState(!!productToEdit?.agotado);
+  const [imageUrl, setImageUrl] = useState(productToEdit?.image_url || '');
+  const [currentColor, setCurrentColor] = useState('#000000');
   const { setMessage } = useAdminMessage();
-
-  useEffect(() => {
-    supabase.from('categories').select('*').order('name').then(({ data }) => setCategories(data || []));
-  }, []);
 
   useEffect(() => {
     if (productToEdit) {
       setName(productToEdit.name || '');
       setDescription(productToEdit.description || '');
+      setSpecs(productToEdit.specs || []);
       setPrice(productToEdit.price || '');
-      setCategoryId(productToEdit.category_id || '');
-      setImageUrl(productToEdit.image_url || '');
+      setSalePrice(productToEdit.sale_price || '');
       setStock(productToEdit.stock || 0);
-      setAgotado(productToEdit.agotado || false);
-      setIsActive(productToEdit.is_active ?? true);
-      setColors(Array.isArray(productToEdit.colors) ? productToEdit.colors : []);
-    } else {
-      setName(''); setDescription(''); setPrice(''); setCategoryId('');
-      setImageUrl(''); setStock(0); setAgotado(false); setIsActive(true);
-      setColors([]);
+      setCategoryId(productToEdit.category_id || '');
+      setColors(productToEdit.colors || []);
+      setLabel(productToEdit.label || '');
+      setIsActive(!!productToEdit.is_active);
+      setAgotado(!!productToEdit.agotado);
+      setImageUrl(productToEdit.image_url || '');
     }
   }, [productToEdit]);
 
-  function addColor() {
-    setColors(prev => [...prev, '#000000']);
-  }
-  function updateColor(idx, value) {
-    setColors(prev => prev.map((c, i) => i === idx ? value : c));
-  }
-  function removeColor(idx) {
-    setColors(prev => prev.filter((_, i) => i !== idx));
-  }
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('categories').select('*').order('name');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Funciones para el color picker
+  const addColor = () => {
+    if (currentColor && !colors.includes(currentColor)) {
+      setColors([...colors, currentColor]);
+    }
+  };
+
+  const removeColor = (colorToRemove) => {
+    setColors(colors.filter(c => c !== colorToRemove));
+  };
 
   async function handleSave() {
+    const token = getAdminToken();
     const { data, error } = await supabase.rpc('admin_upsert_product', {
-      p_token: getAdminToken(),
+      p_token: token,
       p_id: productToEdit?.id || null,
       p_name: name,
       p_description: description,
       p_price: Number(price),
-      p_category_id: categoryId || null,
-      p_image_url: imageUrl || null,
+      p_sale_price: salePrice ? Number(salePrice) : null,
       p_stock: Number(stock),
-      p_agotado: agotado,
-      p_is_active: isActive,
+      p_category_id: categoryId || null,
       p_colors: colors,
+      p_label: label || null,
+      p_is_active: isActive,
+      p_agotado: agotado,
+      p_image_url: imageUrl || null,
+      p_specs: specs
     });
-
     if (error) {
       setMessage(`Error: ${error.message}`);
     } else {
-      setMessage('Producto guardado exitosamente');
+      setMessage(productToEdit ? 'Producto actualizado exitosamente' : 'Producto creado exitosamente');
       onSaved?.(data);
     }
   }
 
-  // JSX Actualizado con Grid
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Nombre</label>
-        <input className="mt-1 w-full px-3 py-2 border rounded-md" placeholder="Nombre" value={name} onChange={e => setName(e.target.value)} />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Descripción</label>
-        <textarea className="mt-1 w-full px-3 py-2 border rounded-md" placeholder="Descripción" value={description} onChange={e => setDescription(e.target.value)} />
+        <label className="block text-sm font-medium mb-1">Nombre</label>
+        <input
+          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="Nombre del producto"
+        />
       </div>
 
-      {/* --- Grid de 2 Columnas --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label className="block text-sm font-medium mb-1">Descripción</label>
+        <textarea
+          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          rows="3"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          placeholder="Descripción del producto"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Especificaciones</label>
+        <textarea
+          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          rows="6"
+          value={specs.join('\n')}
+          onChange={e => setSpecs(e.target.value.split('\n'))}
+          placeholder="Especificaciones del producto (una por línea)"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Precio</label>
-          <input type="number" className="mt-1 w-full px-3 py-2 border rounded-md" placeholder="Precio" value={price} onChange={e => setPrice(e.target.value)} />
+          <label className="block text-sm font-medium mb-1">Precio</label>
+          <input
+            type="number"
+            step="0.01"
+            className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={price}
+            onChange={e => setPrice(e.target.value)}
+            placeholder="0.00"
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Categoría</label>
-          <select className="mt-1 w-full px-3 py-2 border rounded-md" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
-            <option value="">Seleccionar Categoría</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          <label className="block text-sm font-medium mb-1">Precio rebajado (opcional)</label>
+          <input
+            type="number"
+            step="0.01"
+            className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={salePrice}
+            onChange={e => setSalePrice(e.target.value)}
+            placeholder="0.00"
+          />
+        </div>
+      </div>
+
+      {salePrice && (
+        <div className="flex items-center gap-3 p-3 bg-green-50 rounded-md">
+          <span className="text-sm text-gray-600">Vista previa:</span>
+          <span className="line-through text-red-600">${Number(price).toLocaleString()}</span>
+          <span className="font-semibold text-green-600">${Number(salePrice).toLocaleString()}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Stock</label>
+          <input
+            type="number"
+            className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={stock}
+            onChange={e => setStock(e.target.value)}
+            min="0"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Categoría</label>
+          <select
+            className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={categoryId}
+            onChange={e => setCategoryId(e.target.value)}
+          >
+            <option value="">Sin categoría</option>
+            {(categories || []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Stock</label>
-          <input type="number" className="mt-1 w-full px-3 py-2 border rounded-md" placeholder="Stock" value={stock} onChange={e => setStock(Number(e.target.value))} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Colores</label>
-          <div className="mt-1 space-y-2">
-            {colors.map((c, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <input type="color" value={c} onChange={(e) => updateColor(idx, e.target.value)} />
-                <span className="w-6 h-6 rounded-full border" style={{ backgroundColor: c }}></span>
-                <button className="text-sm text-red-600" onClick={() => removeColor(idx)}>Quitar</button>
-              </div>
-            ))}
-            <button type="button" className="px-2 py-1 rounded-md border" onClick={addColor}>+ Agregar color</button>
+      </div>
+
+      {/* Imagen del producto */}
+      <div>
+        <label className="block text-sm font-medium mb-1">Imagen del producto</label>
+        <ImageUpload
+          value={imageUrl}
+          onUploaded={setImageUrl}
+        />
+      </div>
+
+      {/* Color picker mejorado */}
+      <div>
+        <label className="block text-sm font-medium mb-2">Colores disponibles</label>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={currentColor}
+              onChange={e => setCurrentColor(e.target.value)}
+              className="w-12 h-10 border rounded cursor-pointer"
+            />
+            <input
+              type="text"
+              value={currentColor}
+              onChange={e => setCurrentColor(e.target.value)}
+              className="flex-1 px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="#000000"
+            />
+            <button
+              type="button"
+              onClick={addColor}
+              className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Agregar
+            </button>
           </div>
+
+          {colors.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {colors.map((color, index) => (
+                <div key={index} className="flex items-center gap-1 bg-gray-100 rounded-md p-1">
+                  <div
+                    className="w-6 h-6 rounded border"
+                    style={{ backgroundColor: color }}
+                  ></div>
+                  <span className="text-xs px-1">{color}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeColor(color)}
+                    className="text-red-500 hover:text-red-700 text-sm"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-      {/* --- Fin del Grid --- */}
 
       <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Imagen</label>
-        <ImageUpload value={imageUrl} onUploaded={setImageUrl} />
+        <label className="block text-sm font-medium mb-1">Etiqueta (opcional)</label>
+        <input
+          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          value={label}
+          onChange={e => setLabel(e.target.value)}
+          placeholder="Ej: Nuevo, Oferta, Destacado"
+        />
+        {label === 'Nueva oferta' && (
+          <div className="mt-1 text-xs text-blue-600">Esta etiqueta se mostrará en azul</div>
+        )}
       </div>
 
-      <div className="flex items-center gap-4 pt-2">
-        <label className="flex items-center gap-2"><input type="checkbox" checked={agotado} onChange={e => setAgotado(e.target.checked)} /> Agotado</label>
-        <label className="flex items-center gap-2"><input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} /> Activo</label>
+      {/* Checkboxes */}
+      <div className="space-y-2">
+        <label className="inline-flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={e => setIsActive(e.target.checked)}
+            className="rounded"
+          />
+          <span className="text-sm">Producto activo</span>
+        </label>
+
+        <label className="inline-flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={agotado}
+            onChange={e => setAgotado(e.target.checked)}
+            className="rounded"
+          />
+          <span className="text-sm">Marcar como agotado</span>
+        </label>
       </div>
 
-      <div className="pt-4">
-        <button className="px-4 py-2 rounded-md bg-green-600 text-white" onClick={handleSave}>
-          {productToEdit ? 'Actualizar Producto' : 'Guardar Producto'}
+      <div className="pt-4 border-t">
+        <button
+          className="w-full px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 font-medium"
+          onClick={handleSave}
+        >
+          {productToEdit ? 'Actualizar producto' : 'Crear producto'}
         </button>
       </div>
     </div>
@@ -174,102 +320,132 @@ function ProductForm({ onSaved, productToEdit }) {
 
 // --- Panel de Productos (Sin cambios en la lógica) ---
 function ProductsPanel() {
-  const [products, setProducts] = useState([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [products, setProducts] = useState([]);
+  const [total, setTotal] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const { setMessage } = useAdminMessage();
 
-  async function loadProducts() {
+  const loadPage = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('products').select('*, categories(name)').order('name');
-    if (error) setMessage(`Error: ${error.message}`);
-    else setProducts(data || []);
-    setLoading(false);
-  }
+    setError('');
+    try {
+      const token = getAdminToken();
+      if (!token) throw new Error('No admin token');
+      const { data: list, error: err1 } = await supabase.rpc('admin_list_products_page', { p_token: token, p_page: page, p_page_size: pageSize });
+      if (err1) throw err1;
+      const { data: cnt, error: err2 } = await supabase.rpc('admin_count_products', { p_token: token });
+      if (err2) throw err2;
+      setProducts(list || []);
+      setTotal(Number(cnt || 0));
+    } catch (e) {
+      console.error(e);
+      setError('Error cargando productos paginados (RPC)');
+      setMessage('Error cargando productos paginados (RPC)');
+      setProducts([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  useEffect(() => { loadProducts(); }, []);
+  useEffect(() => { loadPage(); }, [page]);
 
-  function handleCreate() {
-    setSelectedProduct(null);
-    setIsModalOpen(true);
-  }
-
-  function handleEdit(product) {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
-  }
-
-  async function handleDelete(productId) {
-    if (!window.confirm('¿Estás seguro de que quieres eliminar este producto?')) return;
-
-    const { error } = await supabase.rpc('admin_delete_product', {
-      p_token: getAdminToken(),
-      p_id: productId
-    });
-
-    if (error) setMessage(`Error: ${error.message}`);
-    else {
+  function handleCreate() { setSelectedProduct(null); setIsModalOpen(true); }
+  function handleEdit(p) { setSelectedProduct(p); setIsModalOpen(true); }
+  async function handleDelete(id) {
+    if (!window.confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
+    const { error: delErr } = await supabase.rpc('admin_delete_product', { p_token: getAdminToken(), p_id: id });
+    if (delErr) {
+      setError(delErr.message);
+      setMessage(`Error: ${delErr.message}`);
+    } else {
       setMessage('Producto eliminado exitosamente');
-      loadProducts();
+      loadPage();
     }
   }
+  function onFormSaved() { setIsModalOpen(false); loadPage(); }
 
-  function onFormSaved() {
-    setIsModalOpen(false);
-    loadProducts();
-  }
-
-  if (loading) return 'Cargando productos...';
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div>
-      <div className="flex justify-end mb-4">
-        <button className="px-4 py-2 rounded-md bg-green-600 text-white" onClick={handleCreate}>
-          + Crear Producto
-        </button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Listado de productos</h3>
+        <div className="flex items-center gap-2">
+          {error && <div className="text-red-600 text-sm">{error}</div>}
+          <button className="px-3 py-1.5 rounded-md bg-green-600 text-white" onClick={handleCreate}>+ Crear producto</button>
+        </div>
       </div>
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
-          <thead className="bg-neutral-50 dark:bg-neutral-800">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Producto</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Categoría</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Precio</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Stock</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Estado</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-neutral-500 uppercase">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-700">
-            {products.map(p => (
-              <tr key={p.id}>
-                <td className="px-6 py-4 whitespace-nowrap">{p.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{p.categories?.name || 'N/A'}</td>
-                <td className="px-6 py-4 whitespace-nowrap">${Number(p.price).toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{p.stock}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {p.is_active ? 'Activo' : 'Inactivo'} {p.agotado ? '(Agotado)' : ''}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
-                  <button className="text-blue-600 hover:text-blue-900" onClick={() => handleEdit(p)}>Editar</button>
-                  <button className="text-red-600 hover:text-red-900" onClick={() => handleDelete(p.id)}>Eliminar</button>
-                </td>
+      {loading ? (
+        <div>Cargando...</div>
+      ) : (
+        <>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left">
+                <th className="p-2">Nombre</th>
+                <th className="p-2">Precio</th>
+                <th className="p-2">Estado</th>
+                <th className="p-2">Etiqueta</th>
+                <th className="p-2">Stock</th>
+                <th className="p-2">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {products.length === 0 && <div className="text-center py-4">No hay productos</div>}
-      </div>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={selectedProduct ? 'Editar Producto' : 'Crear Producto'}
-      >
-        <ProductForm onSaved={onFormSaved} productToEdit={selectedProduct} />
-      </Modal>
+            </thead>
+            <tbody>
+              {products.map(p => (
+                <tr key={p.id} className="border-t">
+                  <td className="p-2">{p.name}</td>
+                  <td className="p-2">
+                    {p.sale_price ? (
+                      <div className="flex items-center gap-2">
+                        <span className="line-through text-red-600">${Number(p.price).toLocaleString()}</span>
+                        <span className="font-semibold">${Number(p.sale_price).toLocaleString()}</span>
+                      </div>
+                    ) : (
+                      <span>${Number(p.price).toLocaleString()}</span>
+                    )}
+                  </td>
+                  <td className="p-2">
+                    {p.agotado ? <span className="text-red-600">Agotado</span> : <span className="text-green-600">Activo</span>}
+                  </td>
+                  <td className="p-2">
+                    {p.label === 'Nueva oferta' ? (
+                      <span className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700">Nueva oferta</span>
+                    ) : p.label ? (
+                      <span className="px-2 py-1 text-xs rounded bg-amber-100 text-amber-700">{p.label}</span>
+                    ) : (
+                      <span className="text-neutral-400 flex justify-center">-</span>
+                    )}
+                  </td>
+                  <td className="p-2">{p.stock}</td>
+                  <td className="p-2 text-right space-x-2">
+                    <div className="flex justify-start gap-2">
+                      <button className="text-blue-600 hover:text-blue-900" onClick={() => handleEdit(p)}>Editar</button>
+                      <button className="text-red-600 hover:text-red-900" onClick={() => handleDelete(p.id)}>Eliminar</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {products.length === 0 && (
+                <tr><td className="p-2" colSpan="6">Sin productos</td></tr>
+              )}
+            </tbody>
+          </table>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button className="px-3 py-1 rounded-md border disabled:opacity-50" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>← Anterior</button>
+            <div className="text-sm">Página {page} de {totalPages}</div>
+            <button className="px-3 py-1 rounded-md border disabled:opacity-50" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Siguiente →</button>
+          </div>
+          <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={selectedProduct ? 'Editar producto' : 'Crear producto'}>
+            <ProductForm onSaved={onFormSaved} productToEdit={selectedProduct} />
+          </Modal>
+        </>
+      )}
     </div>
   );
 }
@@ -536,7 +712,6 @@ function OrdersPanel() {
   );
 }
 
-// --- Dashboard Principal (Sin cambios) ---
 function AdminDashboardContent() {
   const [tab, setTab] = useState('productos');
   return (

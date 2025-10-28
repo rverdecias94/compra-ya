@@ -41,7 +41,7 @@ export default function HeroSlider() {
           </div>
           <div className="rounded-xl bg-gradient-to-br from-green-100 to-teal-100 dark:from-neutral-800 dark:to-neutral-700 h-48 sm:h-64 flex items-center justify-center">
             <div className="text-center">
-              <img src="/images/hero.png" alt="" srcset="" className="w-100 sm:w-80" />
+              <img src="/images/hero.png" alt="" srcSet="" className="w-100 sm:w-80" />
             </div>
           </div>
         </div>
