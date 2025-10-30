@@ -78,7 +78,7 @@ export default function ProductDetail() {
   }
 
   return (
-    <section className="max-w-6xl mx-auto px-4 py-8">
+    <section className="max-w-7xl mx-auto px-4 py-8">
       <button className="text-sm text-neutral-600 dark:text-neutral-300 mb-4" onClick={() => navigate(-1)}>
         ← Volver
       </button>

@@ -105,8 +105,8 @@ const Chatbot = () => {
       return "Puedes contactarnos por WhatsApp para cualquier consulta o ayuda haciendo clic en el botón flotante en la esquina inferior derecha. 📞";
     }
 
-    if (lowerMessage.includes('usd') || lowerMessage.includes('dólares') || lowerMessage.includes('dolar') || lowerMessage.includes('cup') || lowerMessage.includes('euro') || lowerMessage.includes('peso') || lowerMessage.includes('moneda')) {
-      return "Aceptamos pagos en dólares estadounidenses (USD), pesos cubanos (al cambio + 10 pesos x USD) o euros (EUR según la tasa de cambio). Por favor, contáctanos para más información sobre tasa de cambio. 💰";
+    if (lowerMessage.includes('usd') || lowerMessage.includes('dólares') || lowerMessage.includes('dolar') || lowerMessage.includes('cup') || lowerMessage.includes('euro') || lowerMessage.includes('peso') || lowerMessage.includes('moneda') || lowerMessage.includes('transferencia')) {
+      return "Aceptamos solo pagos en dólares, pesos cubanos (al cambio + 10 pesos x USD) o euros (según la tasa de cambio respecto al USD). Por favor, contáctanos para más información sobre tasa de cambio. 💰";
     }
 
     if (lowerMessage.includes('pago') || lowerMessage.includes('pagar') || lowerMessage.includes('tarjeta') || lowerMessage.includes('efectivo')) {
@@ -145,7 +145,7 @@ const Chatbot = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-32 right-6 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
+          className="fixed bottom-32 right-6 z-0 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
           aria-label="Abrir chat"
         >
           <Bot className="w-8 h-8 text-white" />
@@ -154,7 +154,7 @@ const Chatbot = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-96 h-[600px] bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl flex flex-col border border-neutral-200 dark:border-neutral-700">
+        <div className="fixed bottom-6 right-6 z-40 w-96 h-[600px] bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl flex flex-col border border-neutral-200 dark:border-neutral-700">
           {/* Header */}
           <div className="bg-green-500 text-white p-4 rounded-t-2xl flex justify-between items-center">
             <div className="flex items-center space-x-3">

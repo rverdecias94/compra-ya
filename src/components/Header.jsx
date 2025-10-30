@@ -28,8 +28,8 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur dark:bg-neutral-900/80 border-neutral-200 dark:border-neutral-800">
-      <div className="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
+    <header className="sticky top-0 z-30 w-full border-b bg-white/80 backdrop-blur dark:bg-neutral-900/80 border-neutral-200 dark:border-neutral-800">
+      <div className="max-w-7xl mx-auto px-4 h-24 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to={isAdmin ? '/admin/panel' : '/'} className="font-bold text-lg tracking-tight">
             <img src="/images/logo.png" alt="Merca Hogar" className="w-22 h-20" />

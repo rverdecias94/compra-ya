@@ -170,7 +170,7 @@ export default function CartPage() {
   }
 
   return (
-    <section className="max-w-6xl mx-auto px-4 py-8">
+    <section className="max-w-7xl mx-auto px-4 py-8">
       <h2 className="text-xl font-semibold">Tu carrito</h2>
       {items.length === 0 ? (
         <p className="mt-4 text-neutral-600 dark:text-neutral-300">No hay productos en el carrito.</p>

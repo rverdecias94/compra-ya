@@ -48,7 +48,7 @@ export default function ProductsPage() {
   return (
     <>
       <FeaturedSections />
-      <section id="productos" className="max-w-6xl mx-auto px-4 py-8">
+      <section id="productos" className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold">Todos los Productos</h2>

@@ -25,7 +25,7 @@ export default function HeroSlider() {
 
   return (
     <section className="relative w-full">
-      <div className="max-w-6xl mx-auto px-4 py-10 sm:py-16">
+      <div className="max-w-7xl mx-auto px-4 py-10 sm:py-16">
         <div className="grid sm:grid-cols-2 gap-6 items-center">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">

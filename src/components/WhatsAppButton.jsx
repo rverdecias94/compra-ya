@@ -19,8 +19,8 @@ const WhatsAppComponent = () => {
     {
       id: 2, // Cambiado de 1 a 2
       name: 'Roberto Verdecia',
-      role: 'Soporte técnico',
-      description: 'Encargado de resolver dudas y problemas técnicos',
+      role: 'Atención al Cliente',
+      description: 'Atención al cliente y soporte técnico',
       avatar: '👨‍💻',
       phone: '58582428',
       online: true
@@ -60,7 +60,7 @@ const WhatsAppComponent = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-40">
+    <div className="fixed bottom-10 right-6 z-auto">
       {/* Botón flotante con efecto pulsing */}
       {!isOpen && (
         <div className="relative">

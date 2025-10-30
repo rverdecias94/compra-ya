@@ -715,7 +715,7 @@ function OrdersPanel() {
 function AdminDashboardContent() {
   const [tab, setTab] = useState('productos');
   return (
-    <section className="max-w-6xl mx-auto px-4 py-8">
+    <section className="max-w-7xl mx-auto px-4 py-8">
       <h2 className="text-xl font-semibold">Panel de administración</h2>
       <div className="mt-4 flex items-center gap-3 border-b dark:border-neutral-700">
         {['productos', 'categorias', 'ordenes'].map(t => (

@@ -39,7 +39,7 @@ export const BestSellersSection = () => {
   // 🌀 Cargando
   if (isLoading) {
     return (
-      <section className="max-w-6xl mx-auto px-4 py-8">
+      <section className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold mb-6 text-center">🔥 Productos Más Vendidos</h2>
         <div className="text-center">Cargando productos más vendidos...</div>
       </section>
@@ -50,7 +50,7 @@ export const BestSellersSection = () => {
   if (error) {
     console.error('Error:', error);
     return (
-      <section className="max-w-6xl mx-auto px-4 py-8">
+      <section className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold mb-6 text-center">🔥 Productos Más Vendidos</h2>
         <div className="text-center text-red-500">
           Error al cargar productos más vendidos
@@ -62,7 +62,7 @@ export const BestSellersSection = () => {
   // ℹ️ Sin productos
   if (!products || products.length === 0) {
     return (
-      <section className="max-w-6xl mx-auto px-4 py-8">
+      <section className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold mb-6 text-center">🔥 Productos Más Vendidos</h2>
         <div className="text-center text-gray-500">
           No hay productos más vendidos disponibles
@@ -73,7 +73,7 @@ export const BestSellersSection = () => {
 
   // ✅ Renderizado final
   return (
-    <section className="max-w-6xl mx-auto px-4 py-8 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg">
+    <section className="max-w-7xl mx-auto px-4 py-8 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold mb-2 text-orange-600 dark:text-orange-400">
           🔥 Productos Más Vendidos
