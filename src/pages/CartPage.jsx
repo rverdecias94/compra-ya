@@ -123,7 +123,7 @@ export default function CartPage() {
 
       // Generar mensaje WhatsApp (sin ID de orden)
       const msgLines = [];
-      msgLines.push('*Pedido - Compra Ya!*');
+      msgLines.push('*Pedido - Merca Hogar!*');
       msgLines.push('');
       items.forEach(i => {
         const colorName = i.selected_color ? hexToColorName(i.selected_color) : null;

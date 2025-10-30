@@ -189,7 +189,7 @@ function ProductForm({ onSaved, productToEdit }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Stock</label>
+          <label className="block text-sm font-medium mb-1">Cantidad</label>
           <input
             type="number"
             className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -392,7 +392,7 @@ function ProductsPanel() {
                 <th className="p-2">Precio</th>
                 <th className="p-2">Estado</th>
                 <th className="p-2">Etiqueta</th>
-                <th className="p-2">Stock</th>
+                <th className="p-2">Cantidad</th>
                 <th className="p-2">Acciones</th>
               </tr>
             </thead>

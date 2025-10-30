@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../config/supabase';
 import ProductCard from '../components/ProductCard';
+import { FeaturedSections } from '../components/FeaturedSections';
+
 
 export default function ProductsPage() {
   const [search, setSearch] = useState('');
@@ -44,73 +46,76 @@ export default function ProductsPage() {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <section id="productos" className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold">Productos</h2>
-          <p className="text-sm text-neutral-600 dark:text-neutral-300">Explora y filtra por nombre, categoría y precio.</p>
+    <>
+      <FeaturedSections />
+      <section id="productos" className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold">Todos los Productos</h2>
+            <p className="text-sm text-neutral-600 dark:text-neutral-300">Explora y filtra por nombre, categoría y precio.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <input
+              type="text"
+              placeholder="Buscar producto..."
+              value={search}
+              onChange={(e) => { setPage(1); setSearch(e.target.value); }}
+              className="px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
+            />
+            <select
+              value={categoryId}
+              onChange={(e) => { setPage(1); setCategoryId(e.target.value); }}
+              className="px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
+            >
+              <option value="">Todas</option>
+              {(categories || []).map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <select
+              value={priceOrder}
+              onChange={(e) => { setPage(1); setPriceOrder(e.target.value); }}
+              className="px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
+            >
+              <option value="">Precio</option>
+              <option value="asc">Menor a mayor</option>
+              <option value="desc">Mayor a menor</option>
+            </select>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <input
-            type="text"
-            placeholder="Buscar producto..."
-            value={search}
-            onChange={(e) => { setPage(1); setSearch(e.target.value); }}
-            className="px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
-          />
-          <select
-            value={categoryId}
-            onChange={(e) => { setPage(1); setCategoryId(e.target.value); }}
-            className="px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
-          >
-            <option value="">Todas</option>
-            {(categories || []).map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          <select
-            value={priceOrder}
-            onChange={(e) => { setPage(1); setPriceOrder(e.target.value); }}
-            className="px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
-          >
-            <option value="">Precio</option>
-            <option value="asc">Menor a mayor</option>
-            <option value="desc">Mayor a menor</option>
-          </select>
-        </div>
-      </div>
 
-      {isLoading ? (
-        <div className="mt-6">Cargando productos...</div>
-      ) : (
-        <>
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {products.map(p => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-            {products.length === 0 && (
-              <div className="col-span-full text-center text-neutral-600 dark:text-neutral-300">No hay resultados</div>
-            )}
-          </div>
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <button
-              className="px-3 py-1 rounded-md border disabled:opacity-50"
-              disabled={page <= 1}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-            >
-              ← Anterior
-            </button>
-            <div className="text-sm">Página {page} de {totalPages}</div>
-            <button
-              className="px-3 py-1 rounded-md border disabled:opacity-50"
-              disabled={page >= totalPages}
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            >
-              Siguiente →
-            </button>
-          </div>
-        </>
-      )}
-    </section>
+        {isLoading ? (
+          <div className="mt-6">Cargando productos...</div>
+        ) : (
+          <>
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {products.map(p => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+              {products.length === 0 && (
+                <div className="col-span-full text-center text-neutral-600 dark:text-neutral-300">No hay resultados</div>
+              )}
+            </div>
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button
+                className="px-3 py-1 rounded-md border disabled:opacity-50"
+                disabled={page <= 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+              >
+                ← Anterior
+              </button>
+              <div className="text-sm">Página {page} de {totalPages}</div>
+              <button
+                className="px-3 py-1 rounded-md border disabled:opacity-50"
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              >
+                Siguiente →
+              </button>
+            </div>
+          </>
+        )}
+      </section>
+    </>
   );
 }

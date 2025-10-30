@@ -5,6 +5,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import HeroSlider from './components/HeroSlider';
 import ActionMessage from './components/ActionMessage';
+import WhatsAppButton from './components/WhatsAppButton';
 import ProductsPage from './pages/Products';
 import CartPage from './pages/CartPage';
 import AdminLogin from './pages/AdminLogin';
@@ -40,6 +41,7 @@ const AppContent = () => {
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/panel" element={<ProtectedAdmin><AdminDashboard /></ProtectedAdmin>} />
       </Routes>
+      <WhatsAppButton />
     </div>
   );
 };
