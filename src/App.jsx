@@ -12,6 +12,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import { CartProvider } from './context/CartContext';
 import ProductDetail from './pages/ProductDetail';
+import Chatbot from './components/ChatBot';
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const AppContent = () => {
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/panel" element={<ProtectedAdmin><AdminDashboard /></ProtectedAdmin>} />
       </Routes>
+      <Chatbot />
       <WhatsAppButton />
     </div>
   );
