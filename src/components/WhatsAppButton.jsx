@@ -13,7 +13,7 @@ const WhatsAppComponent = () => {
       role: 'Atención al Cliente',
       description: 'Encargada de ventas',
       avatar: '👩‍💼',
-      phone: '+5358582428',
+      phone: '58582428',
       online: true
     },
     {
@@ -22,7 +22,7 @@ const WhatsAppComponent = () => {
       role: 'Soporte técnico',
       description: 'Encargado de resolver dudas y problemas técnicos',
       avatar: '👨‍💻',
-      phone: '+5358582428',
+      phone: '58582428',
       online: true
     },
   ];
