@@ -154,7 +154,7 @@ const Chatbot = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-40 w-96 h-[600px] bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl flex flex-col border border-neutral-200 dark:border-neutral-700">
+        <div className="fixed bottom-6 right-1 z-40 w-96 h-[600px] bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl flex flex-col border border-neutral-200 dark:border-neutral-700">
           {/* Header */}
           <div className="bg-green-500 text-white p-4 rounded-t-2xl flex justify-between items-center">
             <div className="flex items-center space-x-3">
