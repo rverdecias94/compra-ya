@@ -93,7 +93,7 @@ const Chatbot = () => {
       return "Realizamos envíos a toda la ciudad. La entrega solo se realiza hasta las 5:00 PM. Los pedidos que se realizan después de las 5:00 PM se entregarán el siguiente día. 🚚";
     }
 
-    if (lowerMessage.includes('horario') || lowerMessage.includes('atención') || lowerMessage.includes('abierto')) {
+    if (lowerMessage.includes('horario') || lowerMessage.includes('atención') || lowerMessage.includes('abierto') || lowerMessage.includes('atencion')) {
       return "Estamos disponibles para entrega o recogida de lunes a domingo de 9:00 AM a 5:00 PM ⏰. Los pedidos se pueden realizar en cualquier momento de la jornada. ¿Necesitas ayuda con algo más? 👍";
     }
 
@@ -113,7 +113,7 @@ const Chatbot = () => {
       return "El pago se realiza presencial en la tienda o al ser entregado el producto por el mensajero";
     }
 
-    if (lowerMessage.includes('mensajero') || lowerMessage.includes('mensajería') || lowerMessage.includes('precio')) {
+    if (lowerMessage.includes('mensajer')) {
       return "El precio de la mensajería es relativo al lugar de entrega, al hacer tu pedido coloca tu dirección en el formulario de envío y cuando recibamos la orden te notificamos el valor de la entrega";
     }
 
