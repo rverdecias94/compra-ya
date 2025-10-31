@@ -36,7 +36,7 @@ export default function ProductCard({ product }) {
           ) : null}
         </div>
         <div>
-          {product.stock > 0 ? `Cantidad: ${product.stock}` : 'Agotado'}
+          {product.stock > 0 ? `Disponible: ${product.stock}` : 'Agotado'}
         </div>
 
         {product.colors?.length > 0 && (
